@@ -27,11 +27,11 @@ class Propeller():
             
     def get_thrust_unit(self):
         if self.thrust_unit == 'N':
-            return 1.0  # Return a numerical value of 1.0 for 'N'
+            return 1.0  
         elif self.thrust_unit == 'kgf':
-            return 9.81  # Return a numerical value of 9.81 for 'kgf'
+            return 9.81  
         else:
-            return 1.0  # Return a default numerical value of 1.0
+            return 1.0  
         return self.thrust_unit
 
 class Quadcopter():
@@ -54,8 +54,8 @@ class Quadcopter():
         'torques': {},
         'prop_size': [10, 4.5],
         'weight': 1.2,
-        'forces': {},  # Initialize forces dictionary
-        'prop': Propeller(10, 4.5, thrust_unit='N')  # Create an instance of the Propeller class
+        'forces': {},  
+        'prop': Propeller(10, 4.5, thrust_unit='N')  
         }
         self.quads['q1'] = q1_props
         
@@ -94,20 +94,20 @@ class Quadcopter():
 
     def state_dot(self, time, state, key):
         state_dot = np.zeros(12)
-        # The velocities(t+1 x_dots equal the t x_dots)
+        # snelheden(t+1 x_dots is gelijk aan de t x_dots)
         state_dot[0] = self.quads[key]['state'][3]
         state_dot[1] = self.quads[key]['state'][4]
         state_dot[2] = self.quads[key]['state'][5]
-        # The acceleration
+        # versnelling
         x_dotdot = np.array([0,0,-self.quads[key]['weight']*self.g]) + np.dot(self.rotation_matrix(self.quads[key]['state'][6:9]),np.array([0,0,(self.quads[key]['m1'].thrust + self.quads[key]['m2'].thrust + self.quads[key]['m3'].thrust + self.quads[key]['m4'].thrust)]))/self.quads[key]['weight']
         state_dot[3] = x_dotdot[0]
         state_dot[4] = x_dotdot[1]
         state_dot[5] = x_dotdot[2]
-        # The angular rates(t+1 theta_dots equal the t theta_dots)
+        # hoeksnelheden (t+1 theta_dots zijn gelijk aan de t theta_dots)
         state_dot[6] = self.quads[key]['state'][9]
         state_dot[7] = self.quads[key]['state'][10]
         state_dot[8] = self.quads[key]['state'][11]
-        # The angular accelerations
+        # hoekversnellingen
         omega = self.quads[key]['state'][9:12]
         tau = np.array([self.quads[key]['L']*(self.quads[key]['m1'].thrust-self.quads[key]['m3'].thrust), self.quads[key]['L']*(self.quads[key]['m2'].thrust-self.quads[key]['m4'].thrust), self.b*(self.quads[key]['m1'].thrust-self.quads[key]['m2'].thrust+self.quads[key]['m3'].thrust-self.quads[key]['m4'].thrust)])
         omega_dot = np.dot(self.quads[key]['invI'], (tau - np.cross(omega, np.dot(self.quads[key]['I'],omega))))
@@ -122,59 +122,58 @@ class Quadcopter():
 
         # Convert prop_pitch to radians
         prop_pitch_rad = np.radians(prop_pitch)
-        # Ensure the 'forces' and 'torques' keys are present in the quad dictionary
+        # Zorg ervoor dat de toetsen 'forces' en 'torques' aanwezig zijn in het quad-woordenboek
         if 'forces' not in quad:
             quad['forces'] = {}
         if 'torques' not in quad:
             quad['torques'] = {}
 
-        # Calculate thrust and torque
+        #stuwkracht en koppel
         prop_thrust = quad['prop'].thrust
         thrust = prop_thrust * np.cos(prop_pitch_rad)
         torque = thrust * quad['L'] * np.sin(prop_pitch_rad)
 
-        # Apply forces and torques to the quadcopter
-        quad['forces']['thrust'] = np.array([0, 0, thrust])  # Thrust force
-        quad['forces']['drag'] = -self.drag_coefficient * qd  # Drag force
-       # quad['forces']['wind'] = wind_force  # Wind force
-        quad['torques']['roll'] = np.array([torque, 0, 0])  # Roll torque
-        quad['torques']['pitch'] = np.array([0, -torque, 0])  # Pitch torque
-        quad['torques']['yaw'] = np.array([0, 0, 0])  # Yaw torque
+        # Oefen krachten en koppels uit op de quadcopter
+        quad['forces']['thrust'] = np.array([0, 0, thrust])  # Thrust 
+        quad['forces']['drag'] = -self.drag_coefficient * qd  # Drag 
+       
+        quad['torques']['roll'] = np.array([torque, 0, 0])  # Roll koppel
+        quad['torques']['pitch'] = np.array([0, -torque, 0])  # Pitch koppel
+        quad['torques']['yaw'] = np.array([0, 0, 0])  # Yaw koppel
 
     def update(self, dt):
         for key in self.quads:
             quad = self.quads[key]
 
-            # Apply forces if available
+           
             if key in self.forces:
                 self.apply_force(key, quad['prop']['prop_pitch'], quad['prop']['speed'], self.forces[key])
                 self.forces.pop(key)
 
-            # Calculate acceleration and angular acceleration
+            
             quad_state = quad['state']
-            f = np.array([0, 0, -quad['weight'] * self.g])  # Gravity
-            f += np.sum(list(quad['forces'].values()), axis=0)  # Total forces
-            omega = self.get_angular_rate(key)  # Angular velocity
-            qdd = f / quad['weight']  # Linear acceleration
+            f = np.array([0, 0, -quad['weight'] * self.g])  # gravitatie
+            f += np.sum(list(quad['forces'].values()), axis=0)  # Totale krachten
+            omega = self.get_angular_rate(key)  # hoeksnelheid
+            qdd = f / quad['weight']  # Lineaire acceleratie
 
-            # Calculate torque
+            #torque
             torques = np.sum(list(quad['torques'].values()), axis=0)
             torques -= np.cross(omega, np.dot(quad['I'], omega))
 
-            quad_state[9:12] += np.dot(dt, np.dot(quad['invI'], torques))  # Angular acceleration
+            quad_state[9:12] += np.dot(dt, np.dot(quad['invI'], torques))  # Hoekversnelling
             
-            # Integrate angular velocity to obtain orientation
+            # Integreer hoeksnelheid om oriëntatie te verkrijgen
             quad_state[6:9] += np.dot(dt, omega)
             quad_state[3:6] += np.dot(dt, qdd)
 
-            # Update the state using an ODE solver
             self.ode.set_initial_value(quad['state'], 0).set_f_params(key)
             quad['state'] = self.ode.integrate(self.ode.t + dt)
 
-            # Wrap the orientation angles
+            # Wrap orientatiehoeken
             quad['state'][6:9] = self.wrap_angle(quad['state'][6:9])
 
-            # Ensure the altitude remains non-negative
+            # Zorg ervoor dat de hoogte niet-negatief blijft
             quad['state'][2] = max(0, quad['state'][2])
                         
     def set_motor_speeds(self,quad_name,speeds):
