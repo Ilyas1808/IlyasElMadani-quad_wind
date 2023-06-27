@@ -86,7 +86,8 @@ class GUI():
             x[0] -= 0.2
             x[1] -= 0.2
             self.ax.set_xlim3d(x)
-            
+  
+#-------------------------------------ZOOM---------------------------------------------------------------
     def zoom_in(self, event):
         
         if self.ax.get_xlim3d()[1] != 600.0:
@@ -96,13 +97,15 @@ class GUI():
             quad_positions = [quad['position'] for quad in self.quads.values()]
             zoom_center = np.mean(quad_positions, axis=0)
 
-            zoom_factor = 0.8
-            x_margin = 5
-            y_margin = 5
+            zoom_factor = 0.005 #0.8
+            x_margin = 10 #5
+            y_margin = 10 #5
+            x_range = self.ax.get_xlim3d()[1] - self.ax.get_xlim3d()[0]
+            y_range = self.ax.get_ylim3d()[1] - self.ax.get_ylim3d()[0]
             x_min = zoom_center[0] - zoom_factor * (zoom_center[0] - x_margin)
-            x_max = zoom_center[0] + zoom_factor * (zoom_center[0] - x_margin)
+            x_max = zoom_center[0] + zoom_factor * (x_range - zoom_center[0] + x_margin)
             y_min = zoom_center[1] - zoom_factor * (zoom_center[1] - y_margin)
-            y_max = zoom_center[1] + zoom_factor * (zoom_center[1] - y_margin)
+            y_max = zoom_center[1] + zoom_factor * (y_range - zoom_center[1] + y_margin)
 
             self.ax.set_xlim3d([x_min, x_max])
             self.ax.set_ylim3d([y_min, y_max])

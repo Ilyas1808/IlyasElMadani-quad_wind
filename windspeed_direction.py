@@ -4,7 +4,7 @@ from scipy.interpolate import CubicSpline
 from datetime import datetime, timedelta
 
 def fetch_weather_data():
-    api_key = "cb3dbbc9e6f1418ea85d36bde0d2af4c"
+    api_key = "cd28f6d20ad74d998a7aaa0ff83255b5"
     latitude = 50.8371  # Breedtegraad van Etterbeek
     longitude = 4.3887  # Lengtegraad van Etterbeek
 

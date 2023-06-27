@@ -175,6 +175,7 @@ class Quadcopter():
 
             # Zorg ervoor dat de hoogte niet-negatief blijft
             quad['state'][2] = max(0, quad['state'][2])
+    
                         
     def set_motor_speeds(self,quad_name,speeds):
         self.quads[quad_name]['m1'].set_speed(speeds[0])
